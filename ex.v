@@ -3,48 +3,75 @@
 
 module ex(input wire rst,
 
-          input wire [`AluOpBus]   aluop_i,
-          input wire [`AluSelBus]  alusel_i,
-          input wire [`RegBus]     reg1_i,
-          input wire [`RegBus]     reg2_i,
-          input wire [`RegAddrBus] wd_i,
-          input wire               wreg_i,
+          input wire [`AluOpBus]     aluop_i,
+          input wire [`AluSelBus]    alusel_i,
+          input wire [`RegBus]       reg1_i,
+          input wire [`RegBus]       reg2_i,
+          input wire [`RegAddrBus]   wd_i,
+          input wire                 wreg_i,
 
-          output reg [`RegAddrBus] wd_o,
-          output reg               wreg_o,
-          output reg [`RegBus]     wdata_o,
+          output reg [`RegAddrBus]   wd_o,
+          output reg                 wreg_o,
+          output reg [`RegBus]       wdata_o,
 
-          input wire [`RegBus]     hi_i,
-          input wire [`RegBus]     lo_i,
-          input wire [`RegBus]     mem_hi_i,
-          input wire [`RegBus]     mem_lo_i,
-          input wire [`RegBus]     wb_hi_i,
-          input wire [`RegBus]     wb_lo_i,
-          input wire               mem_whilo_i,
-          input wire               wb_whilo_i,
-          output reg               whilo_o,
-          output reg [`RegBus]     hi_o,
-          output reg [`RegBus]     lo_o);
+          input wire [`RegBus]       hi_i,
+          input wire [`RegBus]       lo_i,
+          input wire [`RegBus]       mem_hi_i,
+          input wire [`RegBus]       mem_lo_i,
+          input wire [`RegBus]       wb_hi_i,
+          input wire [`RegBus]       wb_lo_i,
+          input wire                 mem_whilo_i,
+          input wire                 wb_whilo_i,
+          output reg                 whilo_o,
+          output reg [`RegBus]       hi_o,
+          output reg [`RegBus]       lo_o,
 
-   reg [`RegBus]                   logic_result;
-   reg [`RegBus]                   shift_result;
-   reg [`RegBus]                   move_result;
-   reg [`RegBus]                   HI;
-   reg [`RegBus]                   LO;
+          output reg                 stallreq,
 
-   wire                            ov_sum;
-   wire                            reg1_eq_reg2;
-   wire                            reg1_lt_reg2;
-   reg [`RegBus]                   arithmetic_result;
-   reg [`RegBus]                   mul_result;
-   wire [`RegBus]                  reg2_i_mux;
-   wire [`RegBus]                  reg1_i_not;
-	 wire [`RegBus]                  result_sum;
-   wire [`RegBus]                  opdata1_mult;
-	 wire [`RegBus]                  opdata2_mult;
-   wire [`DoubleRegBus]            hilo_temp;
+          input wire [`DoubleRegBus] hilo_temp_i,
+          input wire [1:0]           cnt_i,
+          output reg [`DoubleRegBus] hilo_temp_o,
+          output reg [1:0]           cnt_o,
+          
+          input wire                 is_in_delayslot_i,
+          input wire [`RegBus]       link_address_i,
+          
+          input wire [`InstBus]      inst_i,
+          output wire [`AluOpBus]    aluop_o,
+          output wire [`RegBus]      mem_addr_o,
+          output wire [`RegBus]      reg2_o);
 
 
+   reg [`RegBus]                     logic_result;
+   reg [`RegBus]                     shift_result;
+   reg [`RegBus]                     move_result;
+   reg [`RegBus]                     HI;
+   reg [`RegBus]                     LO;
+
+   wire                              ov_sum;
+   wire                              reg1_eq_reg2;
+   wire                              reg1_lt_reg2;
+   reg [`RegBus]                     arithmetic_result;
+   reg [`DoubleRegBus]               mul_result;
+   wire [`RegBus]                    reg2_i_mux;
+   wire [`RegBus]                    reg1_i_not;
+	 wire [`RegBus]                    result_sum;
+   wire [`RegBus]                    opdata1_mult;
+	 wire [`RegBus]                    opdata2_mult;
+   wire [`DoubleRegBus]              hilo_temp;
+   
+   reg [`DoubleRegBus]               hilo_temp1;
+   reg                               stallreq_for_madd_msub;
+
+
+   assign aluop_o = aluop_i;
+   assign mem_addr_o = reg1_i + {{16{inst_i[15]}},inst_i[15:0]};
+   assign reg2_o = reg2_i;
+
+   
+   assign opdata1_mult = (((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP) || (aluop_i == `EXE_MADD_OP) || (aluop_i == `EXE_MSUB_OP)) && (reg1_i[31] == 1'b1)) ? (~reg1_i + 1) : reg1_i;
+   assign opdata2_mult = (((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP) || (aluop_i == `EXE_MADD_OP) || (aluop_i == `EXE_MSUB_OP)) && (reg2_i[31] == 1'b1)) ? (~reg2_i + 1) : reg2_i;
+   assign hilo_temp = opdata1_mult * opdata2_mult;
    always @ (*) begin
       if (rst == `RstEnable) begin
          {HI,LO} <= {`ZeroWord, `ZeroWord};
@@ -63,11 +90,11 @@ module ex(input wire rst,
          move_result <= `ZeroWord;
       end else begin
          move_result <= `ZeroWord;
-      /*
-      whilo_o <= `WriteDisable;
-      hi_o <= `ZeroWord;
-      lo_o <= `ZeroWord;
-       */
+         /*
+          whilo_o <= `WriteDisable;
+          hi_o <= `ZeroWord;
+          lo_o <= `ZeroWord;
+          */
 
          case (aluop_i)
            `EXE_MFHI_OP: begin
@@ -83,15 +110,15 @@ module ex(input wire rst,
               move_result <= reg1_i;
            end
            /*
-        `EXE_MTHI_OP: begin
-           whilo_o <= `WriteEnable;
-           hi_o <= reg1_i;
-           lo_o <= LO;
+            `EXE_MTHI_OP: begin
+            whilo_o <= `WriteEnable;
+            hi_o <= reg1_i;
+            lo_o <= LO;
         end
-        `EXE_MTLO_OP: begin
-           whilo_o <= `WriteEnable;
-           hi_o <= HI;
-           lo_o <= reg1_i;
+            `EXE_MTLO_OP: begin
+            whilo_o <= `WriteEnable;
+            hi_o <= HI;
+            lo_o <= reg1_i;
         end
             */
            default: begin
@@ -174,6 +201,9 @@ module ex(input wire rst,
         `EXE_RES_MUL:	begin
 	 		     wdata_o <= mul_result[31:0];
 	 	    end
+        `EXE_RES_JUMP_BRANCH: begin
+           wdata_o <= link_address_i;
+        end
         default: begin
            wdata_o <= `ZeroWord;
         end
@@ -214,29 +244,95 @@ module ex(input wire rst,
          endcase // case (aluop_i)
       end // else: !if(rst == `RstEnable)
    end // always @ begin
-
-   assign opdata1_mult = (((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP)) &&
-													(reg1_i[31] == 1'b1)) ? (~reg1_i + 1) : reg1_i;
-   assign opdata2_mult = (((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP)) && (reg2_i[31] == 1'b1)) ? (~reg2_i + 1) : reg2_i;
-   assign hilo_temp = opdata1_mult * opdata2_mult;
+   /*
+    assign opdata1_mult = (((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP)) &&
+		(reg1_i[31] == 1'b1)) ? (~reg1_i + 1) : reg1_i;
+    assign opdata2_mult = (((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP)) && (reg2_i[31] == 1'b1)) ? (~reg2_i + 1) : reg2_i;
+    assign hilo_temp = opdata1_mult * opdata2_mult;
+    */
+   
    always @ (*) begin
       if (rst == `RstEnable) begin
          mul_result <= {`ZeroWord, `ZeroWord};
-      end else if (aluop_i == `EXE_MULTU_OP) begin
-         mul_result <= hilo_temp;
-      end else begin
+      end else if ((aluop_i == `EXE_MUL_OP) ||
+                   (aluop_i == `EXE_MULT_OP) ||
+                   (aluop_i == `EXE_MADD_OP) ||
+                   (aluop_i == `EXE_MSUB_OP)) begin
          if(reg1_i[31] ^ reg2_i[31] == 1'b1) begin
 				    mul_result <= ~hilo_temp + 1;
+         end else begin
+            mul_result <= hilo_temp;
          end
-      end
+      end else begin
+         mul_result <= hilo_temp;
+      end // else: !if((aluop_i == `EXE_MUL_OP) ||...
+   end // always @ begin   
+
+   // stop pipeline
+   always @ (*) begin
+      stallreq = stallreq_for_madd_msub;
    end // always @ begin
 
+   // for MADD, MADDU, MSUB, MSUBU
+   always @ (*) begin
+      if(rst == `RstEnable) begin
+			   hilo_temp_o <= {`ZeroWord,`ZeroWord};
+			   cnt_o <= 2'b00;
+			   stallreq_for_madd_msub <= `NoStop;
+		  end else begin
+			   case (aluop_i)
+				   `EXE_MADD_OP, `EXE_MADDU_OP: begin
+					    if(cnt_i == 2'b00) begin
+						     hilo_temp_o <= mul_result;
+						     cnt_o <= 2'b01;
+						     stallreq_for_madd_msub <= `Stop;
+						     hilo_temp1 <= {`ZeroWord,`ZeroWord};
+					    end else if(cnt_i == 2'b01) begin
+						     hilo_temp_o <= {`ZeroWord,`ZeroWord};
+						     cnt_o <= 2'b10;
+						     hilo_temp1 <= hilo_temp_i + {HI,LO};
+						     stallreq_for_madd_msub <= `NoStop;
+					    end
+				   end // case: `EXE_MADD_OP, `EXE_MADDU_OP
+				   `EXE_MSUB_OP, `EXE_MSUBU_OP:		begin
+					    if(cnt_i == 2'b00) begin
+						     hilo_temp_o <=  ~mul_result + 1 ;
+						     cnt_o <= 2'b01;
+						     stallreq_for_madd_msub <= `Stop;
+					    end else if(cnt_i == 2'b01)begin
+						     hilo_temp_o <= {`ZeroWord,`ZeroWord};
+						     cnt_o <= 2'b10;
+						     hilo_temp1 <= hilo_temp_i + {HI,LO};
+						     stallreq_for_madd_msub <= `NoStop;
+					    end
+				   end // case: `EXE_MSUB_OP, `EXE_MSUBU_OP
+				   default:	begin
+					    hilo_temp_o <= {`ZeroWord,`ZeroWord};
+					    cnt_o <= 2'b00;
+					    stallreq_for_madd_msub <= `NoStop;
+				   end
+			   endcase // case (aluop_i)
+		  end // else: !if(rst == `RstEnable)
+   end // always @ begin
+
+
+   
    always @ (*) begin
 		  if(rst == `RstEnable) begin
 			   whilo_o <= `WriteDisable;
 			   hi_o <= `ZeroWord;
 			   lo_o <= `ZeroWord;
-		  end else if((aluop_i == `EXE_MULT_OP) || (aluop_i == `EXE_MULTU_OP)) begin
+		  end else if ((aluop_i == `EXE_MSUB_OP) ||
+                   (aluop_i == `EXE_MSUBU_OP)) begin
+         whilo_o <= `WriteEnable;
+         hi_o <= hilo_temp1[63:32];
+         lo_o <= hilo_temp1[31:0];
+      end else if ((aluop_i == `EXE_MADD_OP) ||
+                   (aluop_i == `EXE_MADDU_OP)) begin
+         whilo_o <= `WriteEnable;
+         hi_o <= hilo_temp1[63:32];
+         lo_o <= hilo_temp1[31:0];
+      end else if((aluop_i == `EXE_MULT_OP) || (aluop_i == `EXE_MULTU_OP)) begin
 			   whilo_o <= `WriteEnable;
 			   hi_o <= mul_result[63:32];
 			   lo_o <= mul_result[31:0];
@@ -255,5 +351,9 @@ module ex(input wire rst,
 		  end
 	 end // always @ begin
 
+
+
+
+   
 endmodule // ex
 

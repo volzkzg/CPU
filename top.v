@@ -5,7 +5,14 @@ module top(input wire clk,
 
            input wire [`RegBus]  rom_data_i,
            output wire [`RegBus] rom_addr_o,
-           output wire           rom_ce_o);
+           output wire           rom_ce_o,
+
+           input wire [`RegBus]  ram_data_i,
+           output wire [`RegBus] ram_data_o,
+           output wire [`RegBus] ram_addr_o,
+           output wire           ram_we_o,
+           output wire [3:0]     ram_sel_o,
+           output wire           ram_ce_o);
 
    // IF/ID - ID
 	 wire [`InstAddrBus]           pc;
@@ -19,6 +26,10 @@ module top(input wire clk,
 	 wire [`RegBus]                id_reg2_o;
 	 wire                          id_wreg_o;
 	 wire [`RegAddrBus]            id_wd_o;
+   wire                          id_is_in_delayslot_o;
+   wire [`RegBus]                id_link_address_o;
+   wire [`RegBus]                id_inst_o;
+   
 
    // ID/EX - EX
 	 wire [`AluOpBus]              ex_aluop_i;
@@ -27,7 +38,10 @@ module top(input wire clk,
 	 wire [`RegBus]                ex_reg2_i;
 	 wire                          ex_wreg_i;
 	 wire [`RegAddrBus]            ex_wd_i;
-
+   wire                          ex_is_in_delayslot_i;
+   wire [`RegBus]                ex_link_address_i;
+   wire [`RegBus]                ex_inst_i;
+   
    // EX - EX/MEM
 	 wire                          ex_wreg_o;
 	 wire [`RegAddrBus]            ex_wd_o;
@@ -35,6 +49,11 @@ module top(input wire clk,
    wire [`RegBus]                ex_hi_o;
 	 wire [`RegBus]                ex_lo_o;
    wire                          ex_whilo_o;
+   wire [`AluOpBus]              ex_aluop_o;
+	 wire [`RegBus]                ex_mem_addr_o;
+	 wire [`RegBus]                ex_reg1_o;
+	 wire [`RegBus]                ex_reg2_o;
+   
 
    // EX/MEM - MEM
 	 wire                          mem_wreg_i;
@@ -43,6 +62,10 @@ module top(input wire clk,
    wire [`RegBus]                mem_hi_i;
 	 wire [`RegBus]                mem_lo_i;
    wire                          mem_whilo_i;
+   wire [`AluOpBus]              mem_aluop_i;
+	 wire [`RegBus]                mem_mem_addr_i;
+	 wire [`RegBus]                mem_reg1_i;
+	 wire [`RegBus]                mem_reg2_i;
    
    // MEM - MEM/WB
 	 wire                          mem_wreg_o;
@@ -71,12 +94,31 @@ module top(input wire clk,
    // HILO
    wire [`RegBus]                hi;
    wire [`RegBus]                lo;
-   
+
+   // control stall
+   wire [5:0]                    stall;
+	 wire                          stallreq_from_id;	
+	 wire                          stallreq_from_ex;
+
+   wire [`DoubleRegBus]          hilo_temp_o;
+	 wire [1:0]                    cnt_o;
+	 wire [`DoubleRegBus]          hilo_temp_i;
+	 wire [1:0]                    cnt_i;
+
+	 wire                          is_in_delayslot_i;
+	 wire                          is_in_delayslot_o;
+	 wire                          next_inst_in_delayslot_o;
+	 wire                          id_branch_flag_o;
+	 wire [`RegBus]                branch_target_address;
 
 	 pc_reg pc_reg0(.clk(clk),
 		              .rst(rst),
 		              .pc(pc),
-		              .ce(rom_ce_o));
+		              .ce(rom_ce_o),
+                  .stall(stall),
+                  .branch_flag_i(id_branch_flag_o),
+		              .branch_target_address_i(branch_target_address));
+
 
    assign rom_addr_o = pc;
 
@@ -85,7 +127,8 @@ module top(input wire clk,
 		            .if_pc(pc),
 		            .if_inst(rom_data_i),
 		            .id_pc(id_pc_i),
-		            .id_inst(id_inst_i));
+		            .id_inst(id_inst_i),
+                .stall(stall));
 
 	 id id0(.rst(rst),
 		      .pc_i(id_pc_i),
@@ -113,8 +156,20 @@ module top(input wire clk,
 
           .ex_wreg_i(ex_wreg_o),
           .ex_wdata_i(ex_wdata_o),
-          .ex_wd_i(ex_wd_o));
-   
+          .ex_wd_i(ex_wd_o),
+
+          .stallreq(stallreq_from_id),
+
+          .is_in_delayslot_i(is_in_delayslot_i),
+          .is_in_delayslot_o(id_is_in_delayslot_o),
+	 	      .next_inst_in_delayslot_o(next_inst_in_delayslot_o),
+		      .branch_flag_o(id_branch_flag_o),
+		      .branch_target_address_o(branch_target_address),
+		      .link_addr_o(id_link_address_o),
+          
+          .inst_o(id_inst_o),
+          .ex_aluop_i(ex_aluop_o));
+
 
 	 regfile regfile1(
 		                .clk (clk),
@@ -145,8 +200,19 @@ module top(input wire clk,
 		            .ex_reg1(ex_reg1_i),
 		            .ex_reg2(ex_reg2_i),
 		            .ex_wd(ex_wd_i),
-		            .ex_wreg(ex_wreg_i));
-   
+		            .ex_wreg(ex_wreg_i),
+
+                .stall(stall),
+                .id_link_address(id_link_address_o),
+		            .id_is_in_delayslot(id_is_in_delayslot_o),
+		            .next_inst_in_delayslot_i(next_inst_in_delayslot_o),
+                .ex_link_address(ex_link_address_i),
+  	            .ex_is_in_delayslot(ex_is_in_delayslot_i),
+		            .is_in_delayslot_o(is_in_delayslot_i),
+                
+                .id_inst(id_inst_o),
+		            .ex_inst(ex_inst_i));
+
 	 ex ex0(
 		      .rst(rst),
 
@@ -171,8 +237,22 @@ module top(input wire clk,
 	        .mem_whilo_i(mem_whilo_o),
           .hi_o(ex_hi_o),
           .lo_o(ex_lo_o),
-          .whilo_o(ex_whilo_o));
+          .whilo_o(ex_whilo_o),
 
+	        .hilo_temp_i(hilo_temp_i),
+	        .cnt_i(cnt_i),
+          .hilo_temp_o(hilo_temp_o),
+		      .cnt_o(cnt_o),
+		  		.stallreq(stallreq_from_ex),
+
+          .link_address_i(ex_link_address_i),
+		      .is_in_delayslot_i(ex_is_in_delayslot_i),
+
+          .inst_i(ex_inst_i),
+          .aluop_o(ex_aluop_o),
+		      .mem_addr_o(ex_mem_addr_o),
+		      .reg2_o(ex_reg2_o));
+   
    ex_mem ex_mem0(
 		              .clk(clk),
 		              .rst(rst),
@@ -189,7 +269,20 @@ module top(input wire clk,
 		              .mem_wdata(mem_wdata_i),
                   .mem_hi(mem_hi_i),
                   .mem_lo(mem_lo_i),
-                  .mem_whilo(mem_whilo_i));
+                  .mem_whilo(mem_whilo_i),
+
+	                .stall(stall),
+                  .hilo_i(hilo_temp_o),
+		              .cnt_i(cnt_o),
+		              .hilo_o(hilo_temp_i),
+		              .cnt_o(cnt_i),
+
+                  .ex_aluop(ex_aluop_o),
+		              .ex_mem_addr(ex_mem_addr_o),
+		              .ex_reg2(ex_reg2_o),
+  	              .mem_aluop(mem_aluop_i),
+		              .mem_mem_addr(mem_mem_addr_i),
+		              .mem_reg2(mem_reg2_i));
 
 
 
@@ -208,7 +301,17 @@ module top(input wire clk,
 		        .wdata_o(mem_wdata_o),
 		        .hi_o(mem_hi_o),
 		        .lo_o(mem_lo_o),
-		        .whilo_o(mem_whilo_o));
+		        .whilo_o(mem_whilo_o),
+            
+            .aluop_i(mem_aluop_i),
+		        .mem_addr_i(mem_mem_addr_i),
+		        .reg2_i(mem_reg2_i),
+		        .mem_data_i(ram_data_i),
+            .mem_addr_o(ram_addr_o),
+		        .mem_we_o(ram_we_o),
+		        .mem_sel_o(ram_sel_o),
+		        .mem_data_o(ram_data_o),
+		        .mem_ce_o(ram_ce_o));
 
 	 mem_wb mem_wb0(
 		              .clk(clk),
@@ -226,7 +329,9 @@ module top(input wire clk,
 		              .wb_wdata(wb_wdata_i),
 		              .wb_hi(wb_hi_i),
 		              .wb_lo(wb_lo_i),
-		              .wb_whilo(wb_whilo_i));
+		              .wb_whilo(wb_whilo_i),
+
+                  .stall(stall));
 
    hilo_reg hilo_reg0(.clk(clk),
                       .rst(rst),
@@ -238,5 +343,11 @@ module top(input wire clk,
                       .hi_o(hi),
                       .lo_o(lo));
 
+   control control0(
+		          .rst(rst),
+		          .stallreq_from_id(stallreq_from_id),
+		          .stallreq_from_ex(stallreq_from_ex),
+		          .stall(stall));
+   
 endmodule // top
 
