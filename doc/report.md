@@ -42,3 +42,12 @@ The following are my test result.
 
 ![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
 
+![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testmove0.png)
+![Waveform simulation of test-move](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testmove1.png)
+
+![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
