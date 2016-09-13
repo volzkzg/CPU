@@ -40,4 +40,4 @@ Thanks to Zhijian Liu for telling me how to do automatic test, and Lequn Chen fo
 
 The following are my test result.
 
-![Waveform simulation of test-logic]()
+![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/test-logic.png)
