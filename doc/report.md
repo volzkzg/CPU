@@ -31,23 +31,28 @@ And thanks to [Lei Silei](http://blog.csdn.net/leishangwen/article/category/5723
 	- Store instruction: sb, sh, sw, swl, swr.
 
 #### Implemented structures
-I have mainly followed the structure given by Lei Silei. The image below is the structure given by him.
-![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/overview.png)
+I have mainly followed the structure given by Lei Silei. The image below is the structure given by him. ![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/overview.png)
 
 ## Tests
 
 Thanks to Zhijian Liu for telling me how to do automatic test, and Lequn Chen for providing the great test files. 
 
+My processor has passed all test cases.
+
+
 The following are my test result.
+- Waveform simulation of test-logic![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+- Waveform simulation of test-move![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testmove0.png)![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testmove1.png)
+- Waveform simulation of test-yamin![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testyamin0.png)![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testyamin1.png)![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testyamin2.png)![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testyamin3.png)![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testyamin4.png)![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testyamin5.png)
 
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+## Conclusion
 
-![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testmove0.png)
-![Waveform simulation of test-move](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testmove1.png)
+After this project, I have learned the Hardware Description Language Verilog, and have ability to use it to design a hardware like processor. 
 
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
-![Waveform simulation of test-logic](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/testlogic.png)
+And there are also some features which can be added to my processor like tomasulo algorithm (a out-of-order execution method), instruction cache and data cache, exception and interruption module. 
+
+I will add some features along with the process of next semester.
+
+## Reference
+	Lei,S.(2014). 自己动手制作CPU
+	Hennessy,J.L. and Patterson, D.A.(2011). Computer architecture: a quantitative approach.
