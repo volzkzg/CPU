@@ -11,15 +11,15 @@ module test();
     always #1 clock = ~clock;
 
     initial begin
-        $dumpfile("dump.vcd");
-       /*
-        $dumpvars;
-        $dumpvars(0, sopc.cpu.register.storage[1]);
-        $dumpvars(0, sopc.cpu.register.storage[2]);
-        $dumpvars(0, sopc.cpu.register.storage[3]);
-        $dumpvars(0, sopc.cpu.register.storage[4]);
-        */
-        $readmemh("rom.txt", sopc.inst_rom0.inst_mem);
+       $dumpfile("dump.vcd");
+
+       $dumpvars;
+       $dumpvars(0, sopc.top0.regfile1.regs[1]);
+       $dumpvars(0, sopc.top0.regfile1.regs[2]);
+       $dumpvars(0, sopc.top0.regfile1.regs[3]);
+       $dumpvars(0, sopc.top0.regfile1.regs[4]);
+
+       $readmemh("rom.txt", sopc.inst_rom0.inst_mem);
 
         clock = 1'b0;
         reset = 1'b1;
