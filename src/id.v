@@ -172,6 +172,7 @@ module id(input wire                rst,
 	                      reg2_read_o <= 1'b1;
                         instvalid <= `InstValid;
                      end
+                     
                      `EXE_OR: begin
                         wreg_o <= `WriteEnable;
                         aluop_o <= `EXE_OR_OP;
@@ -290,6 +291,29 @@ module id(input wire                rst,
                            wreg_o <= `WriteEnable;
                         end
                      end // case: `EXE_MOVN
+                     `EXE_JR: begin
+									      wreg_o <= `WriteDisable;		aluop_o <= `EXE_JR_OP;
+		  						      alusel_o <= `EXE_RES_JUMP_BRANCH;   reg1_read_o <= 1'b1;	reg2_read_o <= 1'b0;
+		  						      link_addr_o <= `ZeroWord;
+
+			            	    branch_target_address_o <= reg1_o;
+			            	    branch_flag_o <= `Branch;
+
+			                  next_inst_in_delayslot_o <= `InDelaySlot;
+			                  instvalid <= `InstValid;
+								     end
+								     `EXE_JALR: begin
+									      wreg_o <= `WriteEnable;		aluop_o <= `EXE_JALR_OP;
+		  						      alusel_o <= `EXE_RES_JUMP_BRANCH;   reg1_read_o <= 1'b1;	reg2_read_o <= 1'b0;
+		  						      wd_o <= inst_i[15:11];
+		  						      link_addr_o <= pc_plus_8;
+
+			            	    branch_target_address_o <= reg1_o;
+			            	    branch_flag_o <= `Branch;
+
+			                  next_inst_in_delayslot_o <= `InDelaySlot;
+			                  instvalid <= `InstValid;
+								     end
                      default: begin
                      end
                    endcase // case (op3)

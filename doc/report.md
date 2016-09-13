@@ -32,4 +32,12 @@ And thanks to [Lei Silei](http://blog.csdn.net/leishangwen/article/category/5723
 
 #### Implemented structures
 I have mainly followed the structure given by Lei Silei. The image below is the structure given by him.
+![](https://raw.githubusercontent.com/volzkzg/cpu/dev/doc/pic/overview.png)
 
+## Tests
+
+Thanks to Zhijian Liu for telling me how to do automatic test, and Lequn Chen for providing the great test files. 
+
+The following are my test result.
+
+![Waveform simulation of test-logic]()

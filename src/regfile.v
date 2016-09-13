@@ -16,6 +16,7 @@ module regfile(input wire clk,
    // define 32 32bits registers
    reg [`RegBus]                        regs[0:`RegNum-1];
 
+
    // xxxxxxxxxxxx
    initial begin
       $dumpfile("look.vcd");

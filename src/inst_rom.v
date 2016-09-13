@@ -4,8 +4,8 @@ module inst_rom(input wire ce,
 
    reg [`InstBus]                         inst_mem[0:`InstMemNum - 1];
 
-   initial $readmemh("inst_rom.data", inst_mem);
-
+//   initial $readmemh("inst_rom.data", inst_mem);
+   
    always @ (*) begin
 		  if (ce == `ChipDisable) begin
 			   inst <= `ZeroWord;

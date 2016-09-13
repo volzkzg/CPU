@@ -10,7 +10,7 @@ module min_sopc(input wire clk,
    wire [`RegBus]          mem_data_o;
    wire [3:0]              mem_sel_i;
    wire                    mem_ce_i;
-   
+
    top top0(.clk(clk),
             .rst(rst),
             .rom_data_i(inst),

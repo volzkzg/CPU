@@ -1,0 +1,17 @@
+../../src/control.v
+../../src/pc_reg.v
+../../src/id.v
+../../src/ex.v
+../../src/mem.v
+../../src/hilo_reg.v
+../../src/if_id.v
+../../src/id_ex.v
+../../src/ex_mem.v
+../../src/mem_wb.v
+../../src/regfile.v
+../../src/inst_rom.v
+../../src/data_ram.v
+../../src/top.v
+../../src/min_sopc.v
+../assert.v
+./test.v
